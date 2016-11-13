@@ -9,7 +9,7 @@ public class Game extends Canvas implements Runnable{
 	
 	private static final long serialVersionUID = -4124798433549628964L;
 	
-	public static final int WIDTH = 720, HEIGHT = WIDTH / 9 * 12;
+	public static final int WIDTH = 768, HEIGHT = 1024;
 	
 	private Thread thread;
 	private boolean gameRunning = false;
@@ -17,6 +17,7 @@ public class Game extends Canvas implements Runnable{
 	private int fps = 60;
 	private int frameCount = 0;
     private final double GAME_HERTZ = 60.0;
+    private KeyInput input;
     //Calculate how many ns each frame should take for our target game hertz.
     private final double TIME_BETWEEN_UPDATES = 1000000000 / GAME_HERTZ;
     //At the very most we will update the game this many times before a new render.
@@ -29,16 +30,23 @@ public class Game extends Canvas implements Runnable{
 	
 	public Game() {
 		handler = new Handler();
-		this.addKeyListener(new KeyInput(handler));
+		input = new KeyInput(handler);
+		this.addKeyListener(input);
 		
 		new Window(WIDTH, HEIGHT, "bobmaudaran", this);
 		hud = new HUD();
+
+		handler.addObject(new TitleScreen(0, 0, ID.TitleScreen, "resources/test.png", handler));		
 		
-		handler.addObject(new Player(WIDTH/2-32, HEIGHT - 100, ID.Player, "resources/Player.png", handler));
-		int bullets_per_wave = 20;
-		int mp = bullets_per_wave/2;
-		handler.addObject(new Enemy(WIDTH/2-32, 50, ID.Spawner, "resources/Enemy.png", handler, 20, 4, 10, 3000, 999999999));
-		handler.addObject(new Enemy(100, 50, ID.Spawner, "resources/Enemy.png", handler, 20, 4, 10, 3000, 999999999));
+		for (int x = 0; x < WIDTH/64; x++) {
+			for (int y = 0; y < HEIGHT/64;y++) {
+				handler.addObject(new Tile(64*x, 64*y, ID.Tile, "resources/background.png"));
+			}
+		}
+		handler.addObject(new Player(WIDTH/2-32, HEIGHT - 100, ID.Player, null, handler, false));
+		handler.addObject(new Enemy(WIDTH/2-32, 50, ID.BasicEnemy, "resources/Enemy.png", handler, 20, 4, 10, 3000, 1));
+		handler.addObject(new Enemy(100, 50, ID.BasicEnemy, "resources/Enemy.png", handler, 20, 4, 10, 3000, 1));
+		
 	}
 	
 	public synchronized void start() {
@@ -154,7 +162,6 @@ public class Game extends Canvas implements Runnable{
 		
 		Graphics g = bs.getDrawGraphics();
 		
-		g.setColor(Color.black);
 		g.fillRect(0, 0, WIDTH, HEIGHT);
 		
 		handler.render(g);

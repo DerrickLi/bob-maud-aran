@@ -10,13 +10,9 @@ public class KeyInput extends KeyAdapter{
 	private boolean downPressed = false;
 	private boolean leftPressed = false;
 	private boolean rightPressed = false;
-	private boolean firePressed = false;
 	
 	public KeyInput(Handler handler) {
 		this.handler = handler;
-		
-		leftPressed = false;
-		
 	}
 	
 	public void keyPressed(KeyEvent e) {
@@ -31,6 +27,18 @@ public class KeyInput extends KeyAdapter{
 				if (key == KeyEvent.VK_DOWN) { tempObject.setVelY(10); downPressed = true; }
 				if (key == KeyEvent.VK_LEFT) { tempObject.setVelX(-10); leftPressed = true; } 
 				if (key == KeyEvent.VK_RIGHT) { tempObject.setVelX(10); rightPressed = true; }
+				if (key == KeyEvent.VK_SPACE) {
+					Player player = (Player) tempObject;
+					player.setFirePressed(true);
+				}
+			}
+			
+			if (tempObject.getId() == ID.TitleScreen) {
+				//key events for player 1
+				if (key == KeyEvent.VK_ENTER) {
+					TitleScreen inter = (TitleScreen) tempObject;
+					inter.start();
+				}
 			}
 		}
 		
@@ -49,7 +57,11 @@ public class KeyInput extends KeyAdapter{
 				if (key == KeyEvent.VK_DOWN) downPressed = false;
 				if (key == KeyEvent.VK_LEFT) leftPressed = false;
 				if (key == KeyEvent.VK_RIGHT) rightPressed = false;
-				
+				if (key == KeyEvent.VK_SPACE) {
+					Player player = (Player) tempObject;
+					player.setFirePressed(false);
+				}
+							
 				//vertical movement
 				if(!upPressed && !downPressed) tempObject.setVelY(0);
 				//horizontal movement

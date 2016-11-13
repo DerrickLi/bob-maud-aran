@@ -9,12 +9,14 @@ public abstract class GameObject {
 	protected ID id;
 	protected int velX, velY;
 	protected Sprite sprite;
+	private boolean hasSprite = true;
 	
 	public GameObject(int x, int y, ID id, String ref) {
 		this.x = x;
 		this.y = y;
 		this.id = id;
-		this.sprite = SpriteStore.get().getSprite(ref);
+		if (ref == null) hasSprite = false;
+		else this.sprite = SpriteStore.get().getSprite(ref);
 	}
 	
 	public abstract void tick();
@@ -22,7 +24,8 @@ public abstract class GameObject {
 	public abstract Rectangle getBounds();
 	
 	public void draw(Graphics g) {
-		sprite.draw(g,(int) x,(int) y);
+		if (hasSprite)
+			sprite.draw(g,(int) x,(int) y);
 	}
 	
 	public void setX(int x) {

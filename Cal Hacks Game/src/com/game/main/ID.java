@@ -4,6 +4,9 @@ public enum ID {
 
 	Player(),
 	BasicEnemy(),
-	Spawner(),
+	PlayerBullet(),
+	EnemyBullet(),
+	Tile(),
+	TitleScreen(),
 	Trail();
 }
