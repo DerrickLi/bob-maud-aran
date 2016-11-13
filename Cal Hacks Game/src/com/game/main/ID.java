@@ -4,6 +4,7 @@ public enum ID {
 
 	Player(),
 	BasicEnemy(),
+	Intermission(),
 	PlayerBullet(),
 	EnemyBullet(),
 	Tile(),

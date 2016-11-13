@@ -6,36 +6,25 @@ import java.util.LinkedList;
 public class Handler {
 
 	LinkedList<GameObject> object = new LinkedList<GameObject>();
-	
-	private boolean gameStarted;
+	Intermission inter;
+	TitleScreen title;
 	
 	public void tick() {
 		for(int i = 0; i < object.size(); i++) {
 			GameObject tempObject = object.get(i);
-			if (tempObject.id == ID.TitleScreen) {
-				tempObject.tick();
-			}
-			else if (gameStarted) tempObject.tick();
+			tempObject.tick();
 		}
+		//if (inter != null)
+			//inter.start();
 	}
 	
 	public void render(Graphics g) {
 		for(int i = 0; i < object.size(); i++) {
 			GameObject tempObject = object.get(i);
-			if (tempObject.id == ID.TitleScreen) {
-				tempObject.draw(g);
-				tempObject.render(g);
-			}
-			else if (gameStarted) {
-				tempObject.draw(g);
-				tempObject.render(g);
-			}
+			tempObject.draw(g);
+			tempObject.render(g);
 			
 		}
-	}
-	
-	public void setPlayerStarted(boolean start) {
-		gameStarted = start;
 	}
 	
 	public void addObject(GameObject object) {
@@ -44,6 +33,10 @@ public class Handler {
 	
 	public void removeObject(GameObject object) {
 		this.object.remove(object);
+	}
+	
+	public void addIntermission(Intermission intermission) {
+		this.inter = intermission;
 	}
 	
 }

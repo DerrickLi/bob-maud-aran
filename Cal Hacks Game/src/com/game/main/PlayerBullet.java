@@ -24,7 +24,6 @@ public class PlayerBullet extends GameObject{
 	private void collision() {
 		for (int i = 0; i < handler.object.size(); i++) {
 			GameObject tempObject = handler.object.get(i);
-			
 			if (tempObject.getId() == ID.BasicEnemy) {
 				if (getBounds().intersects(tempObject.getBounds())) {
 					Enemy enemy = (Enemy)tempObject;

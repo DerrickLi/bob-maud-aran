@@ -2,25 +2,36 @@ package com.game.main;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.lang.Thread.State;
+
+import com.game.main.Game.STATE;
 
 public class KeyInput extends KeyAdapter{
 
 	private Handler handler;
-	private boolean upPressed = false;
-	private boolean downPressed = false;
-	private boolean leftPressed = false;
-	private boolean rightPressed = false;
+	private boolean upPressed;
+	private boolean downPressed;
+	private boolean leftPressed;
+	private boolean rightPressed;
+	Game game;	
 	
-	public KeyInput(Handler handler) {
+	public KeyInput(Handler handler, Game game) {
 		this.handler = handler;
+		
+		this.game = game;
+		upPressed = false;
+		downPressed = false;
+		leftPressed = false;
+		rightPressed = false;
 	}
 	
 	public void keyPressed(KeyEvent e) {
 		int key = e.getKeyCode();
 		
+		
+		
 		for (int i = 0; i < handler.object.size(); i++) {
 			GameObject tempObject = handler.object.get(i);
-			
 			if (tempObject.getId() == ID.Player) {
 				//key events for player 1
 				if (key == KeyEvent.VK_UP) { tempObject.setVelY(-10); upPressed = true; }
@@ -32,16 +43,18 @@ public class KeyInput extends KeyAdapter{
 					player.setFirePressed(true);
 				}
 			}
-			
-			if (tempObject.getId() == ID.TitleScreen) {
-				//key events for player 1
-				if (key == KeyEvent.VK_ENTER) {
-					TitleScreen inter = (TitleScreen) tempObject;
-					inter.start();
+		}
+		if (key == KeyEvent.VK_P) {
+			String[] message = {"ayym", "lmao"};
+			Intermission inter = new Intermission(message, game, game.getWindow());
+			if (game.gameState == STATE.Game) {
+				if (Game.paused) Game.paused = false;	
+				else {
+					Game.paused = true;
+					inter.render();
 				}
 			}
 		}
-		
 		if (key == KeyEvent.VK_ESCAPE) System.exit(1);
 	}
 	
