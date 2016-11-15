@@ -13,6 +13,9 @@ public class KeyInput extends KeyAdapter{
 	private boolean downPressed;
 	private boolean leftPressed;
 	private boolean rightPressed;
+	private boolean waitingForKeyPress;
+	private int pressCount;
+	private boolean keyPressed;
 	Game game;	
 	
 	public KeyInput(Handler handler, Game game) {
@@ -23,13 +26,18 @@ public class KeyInput extends KeyAdapter{
 		downPressed = false;
 		leftPressed = false;
 		rightPressed = false;
+		waitingForKeyPress = game.getWaitingForKeyPress();
+	}
+	
+	public boolean waitForKeyPress() {
+		return keyPressed;
 	}
 	
 	public void keyPressed(KeyEvent e) {
 		int key = e.getKeyCode();
-		
-		
-		
+		if (waitingForKeyPress) {
+			keyPressed = true;
+		}
 		for (int i = 0; i < handler.object.size(); i++) {
 			GameObject tempObject = handler.object.get(i);
 			if (tempObject.getId() == ID.Player) {
@@ -45,21 +53,23 @@ public class KeyInput extends KeyAdapter{
 			}
 		}
 		if (key == KeyEvent.VK_P) {
-			String[] message = {"ayym", "lmao"};
-			Intermission inter = new Intermission(message, game, game.getWindow());
-			if (game.gameState == STATE.Game) {
+			game.gameState = STATE.Intermission;
+			
+			/*if (game.gameState == STATE.Game) {
 				if (Game.paused) Game.paused = false;	
 				else {
 					Game.paused = true;
 					inter.render();
 				}
-			}
+			}*/
 		}
 		if (key == KeyEvent.VK_ESCAPE) System.exit(1);
 	}
 	
 	public void keyReleased(KeyEvent e) {
 		int key = e.getKeyCode();
+		
+		if (waitingForKeyPress) return;
 		
 		for (int i = 0; i < handler.object.size(); i++) {
 			GameObject tempObject = handler.object.get(i);
@@ -79,6 +89,25 @@ public class KeyInput extends KeyAdapter{
 				if(!upPressed && !downPressed) tempObject.setVelY(0);
 				//horizontal movement
 				if(!leftPressed && !rightPressed) tempObject.setVelX(0);
+			}
+		}
+	}
+	
+	public void keyTyped(KeyEvent e) {
+		// if we're waiting for a "any key" type then
+		// check if we've recieved any recently. We may
+		// have had a keyType() event from the user releasing
+		// the shoot or move keys, hence the use of the "pressCount"
+		// counter.
+		if (waitingForKeyPress) {
+			if (pressCount == 1) {
+				// since we've now recieved our key typed
+				// event we can mark it as such and start 
+				// our new game
+				waitingForKeyPress = false;
+				pressCount = 0;
+			} else {
+				pressCount++;
 			}
 		}
 	}

@@ -28,6 +28,7 @@ public class PlayerBullet extends GameObject{
 				if (getBounds().intersects(tempObject.getBounds())) {
 					Enemy enemy = (Enemy)tempObject;
 					enemy.setHealth(enemy.getHealth() - 1);
+					handler.removeObject(this);
 				}
 			}
 			

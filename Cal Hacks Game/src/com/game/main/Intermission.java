@@ -1,5 +1,8 @@
 package com.game.main;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
@@ -7,54 +10,40 @@ import com.game.main.Game.STATE;
 
 public class Intermission extends KeyAdapter{
 
-	private String[] message;
-	private String nextMessage;
+	private String message;
 	private Game game;
-	private Window window;
-	private int numFrames = 0;
+	private Sprite sprite;
+	private boolean waitingForKeyPress = true;
 	
-	public Intermission(String[] message, Game game, Window window) {
+	public Intermission(String message, Game game, String ref) {
+		sprite = SpriteStore.get().getSprite(ref);
 		this.message = message;
 		this.game = game;
-		this.window = window;
-		
-		numFrames = message.length;
-		nextMessage = message[message.length - numFrames];
-		numFrames--;
 	}
 	
-	public void end() {
-		game.setPaused(false);
-		game.gameState = STATE.Game;
-		window.setVisible(false);
+	public boolean getWaitingForKeyPress() {
+		return waitingForKeyPress;
 	}
 	
-	public void render() {
-		game.gameState = STATE.Paused;
-		game.setPaused(true);
-		window.setMessageBox(nextMessage);
-		System.out.println(nextMessage);
-		window.setVisible(true);
-		
-		nextMessage = message[message.length - numFrames];
-		numFrames--;
+	public void render(Graphics g) {
+		game.setWaitingForKeyPress(waitingForKeyPress);
+		g.drawRect(0, 740, 720, 200);
+		sprite.draw(g, 0, 735);
+		g.setColor(Color.black);
+		g.setFont(new Font("MS PGothic", Font.BOLD, 20));
+		multidrawString(g, message, 750);
 	}
 	
-	public void advanceText() {
-		if (numFrames > 0) {
-			window.setMessageBox(nextMessage);
-			nextMessage = message[message.length - numFrames];
-			numFrames--;
-		}
-		else {
-			end();
-		}
-	}
+	private void multidrawString(Graphics g, String text, int y) {
+        for (String line : text.split("\n"))
+            g.drawString(line, (Game.WIDTH-g.getFontMetrics().stringWidth(line))/2, y += g.getFontMetrics().getHeight());
+    }
 	
 	public void keyPressed(KeyEvent e) {
 		int key = e.getKeyCode();
 		if (key == KeyEvent.VK_ENTER) {
-			advanceText();
+			waitingForKeyPress = false;
+			game.gameState = STATE.Game;
 		}
 	}
 }

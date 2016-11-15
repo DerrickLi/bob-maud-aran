@@ -8,6 +8,7 @@ public class HUD {
 	public static int HEALTH = 100;
 	
 	private int score = 0;
+	private int finalScore = 0;
 	
 	public void tick() {
 		HEALTH = Game.clamp(HEALTH, 0, 100);
@@ -31,5 +32,13 @@ public class HUD {
 	
 	public int getScore() {
 		return score;
+	}
+	
+	public void setFinalScore(int score) {
+		finalScore = score;
+	}
+	
+	public int getFinalScore() {
+		return finalScore;
 	}
 }

@@ -8,15 +8,17 @@ public class Game extends Canvas implements Runnable{
 	
 	private static final long serialVersionUID = -4124798433549628964L;
 	
-	public static final int WIDTH = 768, HEIGHT = 1024;
+	public static final int WIDTH = 720, HEIGHT = 960;
 	
 	private Thread thread;
 	private boolean gameRunning = false;
-	public static boolean paused = false;
 	private int fps = 60;
 	private int frameCount = 0;
     private final double GAME_HERTZ = 60.0;
     private Window window;
+    private boolean waitingForKeyPress = false;
+    private Stage stage;
+    private Sprite background;
     
     //Calculate how many ns each frame should take for our target game hertz.
     private final double TIME_BETWEEN_UPDATES = 1000000000 / GAME_HERTZ;
@@ -29,35 +31,60 @@ public class Game extends Canvas implements Runnable{
 	private HUD hud;
 	private TitleScreen title;
 	private Intermission inter;
+	private GameOverScreen gover;
+	private int regenInterval;
 	
 	public enum STATE {
 		Title,
 		Game,
-		Paused,
+		Intermission,
 		End
 	};
 	
 	public static STATE gameState = STATE.Title;
 	
 	public Game() {
-		handler = new Handler();
-		this.addKeyListener(new KeyInput(handler, this));
-		
-
-		title = new TitleScreen("resources/test.png", this, handler);
-		window = new Window(WIDTH, HEIGHT, "bobmaudaran", this);
-		
-
-		this.addKeyListener(title);
-		//window.setMessageBox("Test run ayy");
-		
 		hud = new HUD();
-		handler.addObject(new Player(WIDTH/2-32, HEIGHT - 100, ID.Player, "resources/player.png", handler, false));
+		handler = new Handler(this, hud);
 		
+		background = SpriteStore.get().getSprite("resources/background.png");
+		title = new TitleScreen("resources/titlescreen.png", this, handler);
+		gover = new GameOverScreen("resources/background.png", this, hud, handler);
 		
+
+		//inter = new Intermission("PLS", this, "resources/messagebox.png");
+
+		window = new Window(WIDTH, HEIGHT, "bobmaudaran", this);
+		this.addKeyListener(new KeyInput(handler, this));
+		this.addKeyListener(title);
+		this.addKeyListener(inter);
+		//window.setMessageBox("Test run ayy");
+	
+		//handler.addObject(new Player(WIDTH/2-32, HEIGHT - 100, ID.Player, "resources/player.png", handler, hud, false));
+		startStages();
+	}
+	
+	public void startStages() {
+		handler.addObject(new Player(Game.WIDTH/2-32, Game.HEIGHT - 100, ID.Player, "resources/player.png", handler, hud, false));
 		
-		handler.addObject(new Enemy(200, 50, ID.BasicEnemy, "resources/Enemy.png", handler, 20, 4, 10, 2000, 1, 3, 2));
-		handler.addObject(new Enemy(100, 50, ID.BasicEnemy, "resources/Enemy.png", handler, 20, 4, 10, 2000, 1, 5, 3));	
+		stage = new Stage(this, handler);
+		stage.stage1();
+		
+	}
+	
+	public void interm(Intermission inter) {
+		this.inter = inter;
+		this.addKeyListener(this.inter);
+		//this.inter.render(g);
+		//gameState = STATE.Intermission;
+	}
+	
+	public boolean getWaitingForKeyPress() {
+		return waitingForKeyPress;
+	}
+	
+	public void setWaitingForKeyPress(boolean wait) {
+		waitingForKeyPress = wait;
 	}
 	
 	public synchronized void start() {
@@ -79,10 +106,6 @@ public class Game extends Canvas implements Runnable{
 		}
 	}
 	
-	public void setPaused(boolean pause) {
-		paused = pause;
-	}
-	
 	public void run() {
       double lastUpdateTime = System.nanoTime();
       //Store the last time we rendered.
@@ -95,68 +118,81 @@ public class Game extends Canvas implements Runnable{
       //Simple way of finding FPS.
       int lastSecondTime = (int) (lastUpdateTime / 1000000000);
       
-      while (gameRunning)
-      {
-         double now = System.nanoTime();
-         int updateCount = 0;
-         //Do as many game updates as we need to, potentially playing catchup.
-         while( now - lastUpdateTime > TIME_BETWEEN_UPDATES && updateCount < MAX_UPDATES_BEFORE_RENDER )
-         {
-            tick();
-            lastUpdateTime += TIME_BETWEEN_UPDATES;
-            updateCount++;
-         }
-
-         //If for some reason an update takes forever, we don't want to do an insane number of catchups.
-         //If you were doing some sort of game that needed to keep EXACT time, you would get rid of this.
-         if ( now - lastUpdateTime > TIME_BETWEEN_UPDATES)
-         {
-            lastUpdateTime = now - TIME_BETWEEN_UPDATES;
-         }
-      
-         //Render. To do so, we need to calculate interpolation for a smooth render.
-         /*float interpolation = Math.min(1.0f, (float) ((now - lastUpdateTime) / TIME_BETWEEN_UPDATES) );
-         drawGame(interpolation);
-         lastRenderTime = now;*/
-         render();
-      
-         //Update the frames we got.
-         int thisSecond = (int) (lastUpdateTime / 1000000000);
-         if (thisSecond > lastSecondTime)
-         {
-            System.out.println(frameCount);
-            fps = frameCount;
-            frameCount = 0;
-            lastSecondTime = thisSecond;
-         }
-      
-         //Yield until it has been at least the target time between renders. This saves the CPU from hogging.
-         while ( now - lastRenderTime < TARGET_TIME_BETWEEN_RENDERS && now - lastUpdateTime < TIME_BETWEEN_UPDATES)
-         {
-            Thread.yield();
-         
-            //This stops the app from consuming all your CPU. It makes this slightly less accurate, but is worth it.
-            //You can remove this line and it will still work (better), your CPU just climbs on certain OSes.
-            //FYI on some OS's this can cause pretty bad stuttering. Scroll down and have a look at different peoples' solutions to this.
-           // try {Thread.sleep(1);} catch(Exception e) {} 
-         
-            now = System.nanoTime();
-         }
+      while (gameRunning)      {
+    	 if (!waitingForKeyPress) {
+	         double now = System.nanoTime();
+	         int updateCount = 0;
+	         //Do as many game updates as we need to, potentially playing catchup.
+	         while( now - lastUpdateTime > TIME_BETWEEN_UPDATES && updateCount < MAX_UPDATES_BEFORE_RENDER )
+	         {
+	            tick();
+	            lastUpdateTime += TIME_BETWEEN_UPDATES;
+	            updateCount++;
+	         }
+	
+	         //If for some reason an update takes forever, we don't want to do an insane number of catchups.
+	         //If you were doing some sort of game that needed to keep EXACT time, you would get rid of this.
+	         if ( now - lastUpdateTime > TIME_BETWEEN_UPDATES)
+	         {
+	            lastUpdateTime = now - TIME_BETWEEN_UPDATES;
+	         }
+	      
+	         //Render. To do so, we need to calculate interpolation for a smooth render.
+	         /*float interpolation = Math.min(1.0f, (float) ((now - lastUpdateTime) / TIME_BETWEEN_UPDATES) );
+	         drawGame(interpolation);
+	         lastRenderTime = now;*/
+	         render();
+	      
+	         //Update the frames we got.
+	         int thisSecond = (int) (lastUpdateTime / 1000000000);
+	         if (thisSecond > lastSecondTime) {
+	            //System.out.println(frameCount);
+	            fps = frameCount;
+	            frameCount = 0;
+	            lastSecondTime = thisSecond;
+	         }
+	      
+	         //Yield until it has been at least the target time between renders. This saves the CPU from hogging.
+	         while ( now - lastRenderTime < TARGET_TIME_BETWEEN_RENDERS && now - lastUpdateTime < TIME_BETWEEN_UPDATES) {
+	            Thread.yield();
+	         
+	            //This stops the app from consuming all your CPU. It makes this slightly less accurate, but is worth it.
+	            //You can remove this line and it will still work (better), your CPU just climbs on certain OSes.
+	            //FYI on some OS's this can cause pretty bad stuttering. Scroll down and have a look at different peoples' solutions to this.
+	           // try {Thread.sleep(1);} catch(Exception e) {} 
+	         
+	            now = System.nanoTime();
+	         }
+    	 }
       }
 	}
 	
 	private void tick()
 	{
+		
 		if (gameState == STATE.Game) {
-			if (!paused) {
-				handler.tick();
-				hud.tick();					
+			regenInterval++;
+			if (regenInterval > 60) {
+				regenInterval = 0;
+				HUD.HEALTH += 1;
+			}
+			handler.tick();
+			hud.tick();
+			
+			if (HUD.HEALTH <= 0) {
+				gameState = STATE.End;
+				gover.tick();
 			}
 		} 
 		else if (gameState == STATE.Title) {
 			title.tick();
-			handler.tick();
 		}
+		else if (gameState == STATE.End){
+			
+			HUD.HEALTH = 100;
+			hud.setScore(0);
+		}
+		
 		/*
 		 * if (HUD.HEALTH <= 0) {
 		 * HUD. HEALTH = 100;
@@ -201,15 +237,22 @@ public class Game extends Canvas implements Runnable{
 		
 		g.fillRect(0, 0, WIDTH, HEIGHT);
 		
-		handler.render(g);
-		if (paused) {
-			g.drawString("PAUSED", 100, 100);
-		}
 		if (gameState == STATE.Game) {
-			hud.render(g);	
+			background.draw(g, 0, 0);
+			hud.render(g);
+			handler.render(g);
 		}
 		else if (gameState == STATE.Title) {
 			title.render(g);
+		}
+		else if (gameState == STATE.Intermission) {
+			background.draw(g, 0, 0);
+			handler.render(g);
+			inter.render(g);
+		}
+		else if (gameState == STATE.End){
+			gover.render(g);
+			handler.clearEnemies();
 		}
 		
 		g.dispose();
